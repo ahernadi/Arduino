@@ -37,66 +37,66 @@
 #define MAGENTA 0xF81F
 #define YELLOW  0xFFE0
 #define WHITE   0xFFFF
-
 Adafruit_TFTLCD tft(LCD_CS, LCD_CD, LCD_WR, LCD_RD, LCD_RESET);
 // If using the shield, all control and data lines are fixed, and
 // a simpler declaration can optionally be used:
 // Adafruit_TFTLCD tft;
+int speaker =1;
 
 void setup(void) {
-  Serial.begin(9600);
-  Serial.println(F("TFT LCD test"));
+  //Serial.begin(9600);
+  ////Serial.println(F("TFT LCD test"));
 
 #ifdef USE_ADAFRUIT_SHIELD_PINOUT
-  Serial.println(F("Using Adafruit 2.8\" TFT Arduino Shield Pinout"));
+  ////Serial.println(F("Using Adafruit 2.8\" TFT Arduino Shield Pinout"));
 #else
-  Serial.println(F("Using Adafruit 2.8\" TFT Breakout Board Pinout"));
+  ////Serial.println(F("Using Adafruit 2.8\" TFT Breakout Board Pinout"));
 #endif
 
-  Serial.print("TFT size is "); Serial.print(tft.width()); Serial.print("x"); Serial.println(tft.height());
+  //Serial.print("TFT size is "); Serial.print(tft.width()); Serial.print("x"); //Serial.println(tft.height());
 
   tft.reset();
 
   uint16_t identifier = tft.readID();
 
   if(identifier == 0x9325) {
-    Serial.println(F("Found ILI9325 LCD driver"));
+   //// //Serial.println(F("Found ILI9325 LCD driver"));
   } else if(identifier == 0x9327) {
-    Serial.println(F("Found ILI9327 LCD driver"));
+    ////Serial.println(F("Found ILI9327 LCD driver"));
   } else if(identifier == 0x9328) {
-    Serial.println(F("Found ILI9328 LCD driver"));
+    ////Serial.println(F("Found ILI9328 LCD driver"));
   } else if(identifier == 0x7575) {
-    Serial.println(F("Found HX8347G LCD driver"));
+    //Serial.println(F("Found HX8347G LCD driver"));
   } else if(identifier == 0x9341) {
-    Serial.println(F("Found ILI9341 LCD driver"));
+    //Serial.println(F("Found ILI9341 LCD driver"));
   } else if(identifier == 0x8357) {
-    Serial.println(F("Found HX8357D LCD driver"));
+    //Serial.println(F("Found HX8357D LCD driver"));
   } else if(identifier == 0x0154) {
-    Serial.println(F("Found S6D0154 LCD driver"));
+    //Serial.println(F("Found S6D0154 LCD driver"));
   } else {
-    Serial.print(F("Unknown LCD driver chip: "));
-    Serial.println(identifier, HEX);
-    Serial.println(F("If using the Adafruit 2.8\" TFT Arduino shield, the line:"));
-    Serial.println(F("  #define USE_ADAFRUIT_SHIELD_PINOUT"));
-    Serial.println(F("should appear in the library header (Adafruit_TFT.h)."));
-    Serial.println(F("If using the breakout board, it should NOT be #defined!"));
-    Serial.println(F("Also if using the breakout, double-check that all wiring"));
-    Serial.println(F("matches the tutorial."));
+    //Serial.print(F("Unknown LCD driver chip: "));
+    //Serial.println(identifier, HEX);
+    //Serial.println(F("If using the Adafruit 2.8\" TFT Arduino shield, the line:"));
+    //Serial.println(F("  #define USE_ADAFRUIT_SHIELD_PINOUT"));
+    //Serial.println(F("should appear in the library header (Adafruit_TFT.h)."));
+    //Serial.println(F("If using the breakout board, it should NOT be #defined!"));
+    //Serial.println(F("Also if using the breakout, double-check that all wiring"));
+    //Serial.println(F("matches the tutorial."));
     return;
   }
 
   tft.begin(identifier);
-     Serial.print(F("Rotation:"));Serial.println(tft.getRotation());
+    // Serial.print(F("Rotation:"));//Serial.println(tft.getRotation());
     tft.fillScreen(BLACK);
   //  tft.setRotation(tft.getRotation()+2);
   //  tft.setRotation(tft.getRotation()+1);
-     Serial.print(F("Rotation:"));Serial.println(tft.getRotation());
+    // Serial.print(F("Rotation:"));//Serial.println(tft.getRotation());
    
     //try tone
-    tone(10, 1047, 1000/4);
+    tone(speaker, 1047, 1000/4);
     delay(1000/4*1.3);
     // stop the tone playing:
-    noTone(10);
+    noTone(speaker);
     //y1,x1,y2,x2
     
 //tft.fillRect(0, 280, 240, 20, WHITE); 
@@ -122,14 +122,14 @@ isBlink=!isBlink;
 //openeye();
 //progress(240, 45,WHITE);
 //tone
-tone(10, 1047, 1000/4);
+tone(speaker, 1047, 1000/4);
     delay(1000/4*1.3);
     // stop the tone playing:
-    noTone(10);
-tone(10, 1047, 1000/4);
+    noTone(speaker);
+tone(speaker, 1047, 1000/4);
     delay(1000/4*1.3);
     // stop the tone playing:
-    noTone(10);    
+    noTone(speaker);    
 }
 for (i=0;i<9;i++)
 {
@@ -139,28 +139,28 @@ isBlink=!isBlink;
 //progress(240, 45,BLACK);
 //openeye();
 //progress(240, 45,WHITE);
-tone(10, 1047, 1000/4);
+tone(speaker, 1047, 1000/4);
     delay(1000/4*1.3);
     // stop the tone playing:
-    noTone(10);
-tone(10, 1047, 1000/4);
+    noTone(speaker);
+tone(speaker, 1047, 1000/4);
     delay(1000/4*1.3);
     // stop the tone playing:
-    noTone(10);    
+    noTone(speaker);    
 }
  tft.fillScreen(BLACK);//shutdown
-tone(10, 1047, 1000/4);
+tone(speaker, 1047, 1000/4);
     delay(1000/4*1.3);
     // stop the tone playing:
-    noTone(10);
-    tone(10, 1047, 1000/4);
+    noTone(speaker);
+    tone(speaker, 1047, 1000/4);
     delay(1000/4*1.3);
     // stop the tone playing:
-    noTone(10);
-    tone(10, 1047, 1000/4);
+    noTone(speaker);
+    tone(speaker, 1047, 1000/4);
     delay(1000/4*1.3);
     // stop the tone playing:
-    noTone(10);
+    noTone(speaker);
  }
 
 void loop() {
@@ -171,8 +171,8 @@ void loop() {
 void progress (int length, int seconds, int color)
 {int i, increment;
  increment=(length-2)/seconds;
- Serial.print("increment:");Serial.println(increment);
- Serial.print("increment*seconds+1:");Serial.println(increment*seconds+1);
+ //Serial.print("increment:");//Serial.println(increment);
+ //Serial.print("increment*seconds+1:");//Serial.println(increment*seconds+1);
   tft.drawRect(0, 279, increment*seconds+2,22 , WHITE);
   //tft.drawRect(1, 280, increment*seconds,20 , WHITE);
   for (i=0; i<seconds; i++)
