@@ -7,7 +7,21 @@ int clockPin = 6;
 int dataPin = 4;
 int relayEnable=7;
 
-byte leds = 255;
+byte leds = 255;//if a bit is 0 the relay is active
+//127 = 01111111. The first realy is active
+/*
+relays 11111111 255 - all off
+relays 01111111 127 - Main Pump start solenoid engaged 
+relays 01111101 125 - 6th
+relays 01111011 123 - 5th
+relays 01110111 119 - 4th
+relays 01101111 111 - 3rd
+relays 01011111 95 - second
+relays 00111111 63 - 1st realy open
+
+*/
+
+
 
 void setup() 
 {
@@ -22,19 +36,22 @@ void setup()
 delay(1000);
   digitalWrite(relayEnable,HIGH);//the state of the shift register is unknown. Lets power off all relays until we initialize
 
+  leds = 127;//all off except first
+  updateShiftRegister();
+  delay(1000);
+  for (int i = 1; i < 7; i++)//
+  {leds = 127;
+    bitWrite(leds, i,0);
+    updateShiftRegister();
+    delay(1000);
+  }
+  leds=255; //turn all off
+ updateShiftRegister();  
 }
 
 void loop() 
 {
-  leds = 127;
-  updateShiftRegister();
-  delay(500);
-  for (int i = 1; i < 7; i++)
-  {leds = 127;
-    bitWrite(leds, i,0);
-    updateShiftRegister();
-    delay(500);
-  }
+
 }
 
 void updateShiftRegister()
