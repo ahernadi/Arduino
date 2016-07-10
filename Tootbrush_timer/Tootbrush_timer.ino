@@ -86,6 +86,8 @@ void setup(void) {
   }
 
   tft.begin(identifier);
+      tft.setRotation(tft.getRotation()+4);
+
     // Serial.print(F("Rotation:"));//Serial.println(tft.getRotation());
     tft.fillScreen(BLACK);
   //  tft.setRotation(tft.getRotation()+2);
@@ -114,7 +116,11 @@ bool isBlink;
 int i=0;
 isBlink=false;
 for (i=0;i<4;i++)
-{
+{tft.setRotation(3);
+  tft.setCursor(50, 0);
+  tft.setTextColor(WHITE);  tft.setTextSize(5);
+  tft.println(i+1);
+  tft.setRotation(4);
 progress(240, 45, (isBlink?BLACK:WHITE));
 isBlink?openeye():closerighteye();
 isBlink=!isBlink;
@@ -129,10 +135,19 @@ tone(speaker, 1047, 1000/4);
 tone(speaker, 1047, 1000/4);
     delay(1000/4*1.3);
     // stop the tone playing:
-    noTone(speaker);    
+    noTone(speaker);
+    tft.setRotation(3);
+    tft.setCursor(50, 0);
+  tft.setTextColor(BLACK);  tft.setTextSize(5);    
+  tft.println(i+1);
+  tft.setRotation(4);
 }
 for (i=0;i<9;i++)
-{
+{tft.setRotation(3);
+  tft.setCursor(50, 0);
+  tft.setTextColor(YELLOW);  tft.setTextSize(5);
+  tft.println(i+1);
+  tft.setRotation(4);
 progress(240, 10, (isBlink?BLACK:WHITE));
 isBlink?openeye():closerighteye();
 isBlink=!isBlink;
@@ -146,7 +161,12 @@ tone(speaker, 1047, 1000/4);
 tone(speaker, 1047, 1000/4);
     delay(1000/4*1.3);
     // stop the tone playing:
-    noTone(speaker);    
+    noTone(speaker); 
+        tft.setRotation(3);
+    tft.setCursor(50, 0);
+  tft.setTextColor(BLACK);  tft.setTextSize(5);    
+  tft.println(i+1);
+  tft.setRotation(4);   
 }
  tft.fillScreen(BLACK);//shutdown
 tone(speaker, 1047, 1000/4);

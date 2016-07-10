@@ -1,0 +1,9 @@
+[submodule "libraries/Adafruit-GFX-Library"]
+	path = libraries/Adafruit-GFX-Library
+	url = https://github.com/adafruit/Adafruit-GFX-Library
+[submodule "libraries/RTClib"]
+	path = libraries/RTClib
+	url = https://github.com/adafruit/RTClib
+[submodule "libraries/Time"]
+	path = libraries/Time
+	url = https://github.com/PaulStoffregen/Time
