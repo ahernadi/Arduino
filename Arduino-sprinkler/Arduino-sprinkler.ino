@@ -29,8 +29,6 @@ relays 00111111 63 - 1st realy open
 RTC_DS3231 RTC;
 DateTime now;
 //zone to shift register mapping
-//#define unsigned long wait=18000000 
-//18000000=5 hours
 
 byte off = 255;
 byte zone1 = 63;
@@ -196,11 +194,7 @@ void initializeSchedule() {
 }
 
 void loadSchedule() {
-    Serial.println("in loadschedule()*");//Debug
-
   initializeSchedule();
-    Serial.println("*done initializeSchedule()*");//Debug
-
   // Load schedule from EEPROM
   int addr = 0;
 
@@ -327,9 +321,9 @@ void waterZone(int zone) {
   case 6:
     water(zone6);
     break;
-  //case 7:
-    //water(zone7);
-  //  break;
+  case 7:
+    water(pumpstart);
+    break;
   //case 8:
   //  water(zone8);
   //  break;
@@ -607,7 +601,6 @@ void setup() {
   Serial.begin(9600);
 
   delay(3000); // wait for console opening
-Serial.println("*RESET*");
   // Set pins to output so we can control the shift register
   pinMode(latchPin, OUTPUT);
   pinMode(dataPin, OUTPUT);  
@@ -616,32 +609,23 @@ Serial.println("*RESET*");
   digitalWrite(relayEnable,LOW);//the state of the shift register is unknown. Lets power off all relays until we initialize
   //turn off all relays
   delay(1000); //lets wait a sec to avoid interference with all relays turning off
-  Serial.println("*will shift out*");//Debug
   shiftOut(dataPin, clockPin, LSBFIRST, off);
-    Serial.println("*done shift out*");//Debug
 
     //Serial.begin (9600); 
 delay(1000);
   digitalWrite(relayEnable,HIGH);//the state of the shift register is now known. we can power the relays back on
-//  pinMode(9, OUTPUT); // LED
-//  digitalWrite(9, LOW);
-  Serial.println("*will water(off)*");//Debug
 
   water(off);
-  Serial.println("*done water(off)*");//Debug
 
-  // Serial.begin(57600);
-  // Serial.println("*RESET*");
+   Serial.println("*RESET*");
 
   // Setup the real time clock
   Wire.begin();
-    Serial.println("*done Wire.begin()*");//Debug
 
  if (! RTC.begin()) {
     Serial.println("Couldn't find RTC");
     while (1);
   }
-    Serial.println("*done RTC.begin*");//Debug
 
   now = RTC.now();
       Serial.print(now.year(), DEC);
@@ -659,14 +643,10 @@ delay(1000);
     Serial.print(now.second(), DEC);
     Serial.println();
 
-    Serial.println("*done RTC.now()*");//Debug
-
   lastMinute = now.minute();
   startTime = now.unixtime();
 
   // Load Schedule
-    Serial.println("*will load schedule*");//Debug
-
   loadSchedule();
   e_printHelp();
 }

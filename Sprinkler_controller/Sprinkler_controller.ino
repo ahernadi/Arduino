@@ -26,8 +26,6 @@ relays 00111111 63 - 1st realy open
 RTC_DS3231 rtc;
 DateTime now;
 //zone to shift register mapping
-#define unsigned long wait=18000000 
-//18000000=5 hours
 
 byte off = 255;
 byte zone1 = 63;
@@ -54,9 +52,6 @@ int workingScheduleNumber = 0;
 Schedule workingSchedule;
 #define SCHEDULELISTSIZE 8
 Schedule scheduleList[SCHEDULELISTSIZE];
-
-
-
 
 // State variables
 int currentZone = 0;
