@@ -28,7 +28,7 @@ relays 00111111 63 - 1st realy open
 */
 RTC_DS3231 RTC;
 DateTime now;
-Datetime delay_until;
+DateTime delay_until;
 //zone to shift register mapping
 
 byte off = 255;
@@ -449,6 +449,7 @@ void parseReceivedText() {
   int firstSpace = command.indexOf(' ');
 
   String cmd = command.substring(0, firstSpace);
+  cmd.toLowerCase();
   cmd.trim();
   String param = command.substring(firstSpace);
   param.trim();
@@ -546,7 +547,7 @@ void parseReceivedText() {
       Serial.print("Stetting rain delay for [");
       Serial.print(param.toInt());
       Serial.println("] days ");
-      delay_until=now.unixtime() + 86400L * param.toInt();//will this work?
+      delay_until=now + TimeSpan(param.toInt(),12,0,6) ;//will this work?
       Serial.print("until [");
       Serial.print(delay_until.year(), DEC);
     Serial.print('/');
@@ -692,7 +693,7 @@ void loop() {
 
   if (lastMinute != now.minute()) {
     lastMinute = now.minute();
-if now.unixtime()<delay_until.unixtime()//only check schedule if rail delay is not set or in the past
+if (now.unixtime()>delay_until.unixtime())//only check schedule if rail delay is not set or in the past
  {    
    // Figure out if it's an even or odd day. (use number of days since the unix epoch, not the current day of the month for a better even/odd pattern regardless of months with an odd number of days)
     boolean isEvenDay = ((now.unixtime() / 86400L) % 2 == 0);
