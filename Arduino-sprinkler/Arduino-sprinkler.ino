@@ -28,6 +28,7 @@ relays 00111111 63 - 1st realy open
 */
 RTC_DS3231 RTC;
 DateTime now;
+Datetime delay_until;
 //zone to shift register mapping
 
 byte off = 255;
@@ -131,21 +132,22 @@ PGM_P const string_table[]  PROGMEM =
 };
 
 const char stringHelp_0[]  PROGMEM = "Available Commands:\n";
-const char stringHelp_1[]  PROGMEM = "?                                  Display this help\n";
-const char stringHelp_2[]  PROGMEM = "time                               Display current time\n";
-const char stringHelp_3[]  PROGMEM = "settime <Mon dd YYYY HH:ii:ss>     Set current time\n";
-const char stringHelp_4[]  PROGMEM = "mem                                Show free memory\n";
-const char stringHelp_5[]  PROGMEM = "on <1-8>                           Turn on zone\n";
-const char stringHelp_6[]  PROGMEM = "off                                Turn off all zones\n";
-const char stringHelp_7[]  PROGMEM = "list                               List all schedules\n";
-const char stringHelp_8[]  PROGMEM = "enable <1-64>                      Enable schedule\n";
-const char stringHelp_9[]  PROGMEM = "disable <1-64>                     Disable schedule\n";
-const char stringHelp_10[] PROGMEM = "set <1-64>                         Modify schedule\n";
-const char stringHelp_11[] PROGMEM = "rm <1-64>                          Remove schedule\n";
-const char stringHelp_12[] PROGMEM = "clearall                           Remove ALL schedules\n";
-const char stringHelp_13[] PROGMEM = "load                               Load schedule from EEPROM\n";
-const char stringHelp_14[] PROGMEM = "save                               Save schedule to EEPROM\n";
-const char stringHelp_15[] PROGMEM = "exit                               Disconnect\n";
+const char stringHelp_1[]  PROGMEM = "?                              Display this help\n";
+const char stringHelp_2[]  PROGMEM = "time                           Display current time\n";
+const char stringHelp_3[]  PROGMEM = "settime <Mon dd YYYY HH:ii:ss> Set current time\n";
+const char stringHelp_4[]  PROGMEM = "mem                            Show free memory\n";
+const char stringHelp_5[]  PROGMEM = "on <1-8>                       Turn on zone\n";
+const char stringHelp_6[]  PROGMEM = "off                            Turn off all zones\n";
+const char stringHelp_7[]  PROGMEM = "list                           List all schedules\n";
+const char stringHelp_8[]  PROGMEM = "enable <1-64>                  Enable schedule\n";
+const char stringHelp_9[]  PROGMEM = "disable <1-64>                 Disable schedule\n";
+const char stringHelp_10[] PROGMEM = "set <1-64>                     Modify schedule\n";
+const char stringHelp_11[] PROGMEM = "rm <1-64>                      Remove schedule\n";
+const char stringHelp_12[] PROGMEM = "clearall                       Remove ALL schedules\n";
+const char stringHelp_13[] PROGMEM = "load                           Load schedule from EEPROM\n";
+const char stringHelp_14[] PROGMEM = "save                           Save schedule to EEPROM\n";
+const char stringHelp_15[] PROGMEM = "raindelay <1-255>              Disables all schedules for number of days from now\n";
+const char stringHelp_16[] PROGMEM = "exit                           Disconnect\n";
 
 PGM_P const stringHelp_table[]  PROGMEM =
 //PROGMEM const char *stringHelp_table[] =
@@ -165,7 +167,8 @@ PGM_P const stringHelp_table[]  PROGMEM =
   stringHelp_12,
   stringHelp_13,
   stringHelp_14,
-  stringHelp_15
+  stringHelp_15,
+  stringHelp_16
 };
 
 char stringBuffer[70];
@@ -538,6 +541,29 @@ void parseReceivedText() {
     //Serial.stop();
     //clientConnected = 0;
   }
+  else if(cmd == "raindelay"){
+    if (param.toInt() > 0) {
+      Serial.print("Stetting rain delay for [");
+      Serial.print(param.toInt());
+      Serial.println("] days ");
+      delay_until=now.unixtime() + 86400L * param.toInt();//will this work?
+      Serial.print("until [");
+      Serial.print(delay_until.year(), DEC);
+    Serial.print('/');
+    Serial.print(delay_until.month(), DEC);
+    Serial.print('/');
+    Serial.print(delay_until.day(), DEC);
+    //Serial.print(" (");
+    //Serial.print(daysOfTheWeek[delay_until.dayOfTheWeek()]);
+    //Serial.print(") ");
+    Serial.print(delay_until.hour(), DEC);
+    Serial.print(':');
+    Serial.print(delay_until.minute(), DEC);
+    Serial.print(':');
+    Serial.print(delay_until.second(), DEC);
+    Serial.println("]");   
+    }
+  }
 
 }
 
@@ -631,6 +657,7 @@ delay(1000);
   }
 
   now = RTC.now();
+  delay_until = now;
       Serial.print(now.year(), DEC);
     Serial.print('/');
     Serial.print(now.month(), DEC);
@@ -665,8 +692,9 @@ void loop() {
 
   if (lastMinute != now.minute()) {
     lastMinute = now.minute();
-
-    // Figure out if it's an even or odd day. (use number of days since the unix epoch, not the current day of the month for a better even/odd pattern regardless of months with an odd number of days)
+if now.unixtime()<delay_until.unixtime()//only check schedule if rail delay is not set or in the past
+ {    
+   // Figure out if it's an even or odd day. (use number of days since the unix epoch, not the current day of the month for a better even/odd pattern regardless of months with an odd number of days)
     boolean isEvenDay = ((now.unixtime() / 86400L) % 2 == 0);
 
     for (int i = 0; i < SCHEDULELISTSIZE; i++) {
@@ -685,7 +713,7 @@ void loop() {
       }
     }
   }
-
+}
   if (Serial.available() ) { // New client connected
     //clientConnected = 1;
     //client = server.available();
