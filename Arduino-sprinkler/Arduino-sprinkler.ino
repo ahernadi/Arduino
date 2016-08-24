@@ -455,9 +455,12 @@ void parseReceivedText() {
   } 
   else if (cmd == "on") {
     waterZone(param.toInt());
+    Serial.print("turned on ");Serial.println(param.toInt());
+  
   } 
   else if (cmd == "off") {
-    waterZone(off);
+    waterZone(0);
+    Serial.println("turned off");
   }
   else if (cmd == "mem") {
     e_printString(4); // "Bytes free: "
