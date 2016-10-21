@@ -49,10 +49,16 @@ byte pumpstart=127;
 // byte subnet[] = { 255,255,255,0 };
 
 // Shift Register (Controls the Solid State Relays)
-int latchPin = 5; // Pin connected to ST_CP of 74HC595
-int clockPin = 6; // Pin connected to SH_CP of 74HC595
-int dataPin = 4; // Pin connected to DS of 74HC595
+int latchPin = 5; // Pin connected to ST_CP of 74HC595 (12)
+int clockPin = 6; // Pin connected to SH_CP of 74HC595(11)
+int dataPin = 4; // Pin connected to DS of 74HC595 (14)
 int relayEnable=7;
+
+//manual cycle
+// will use interrupts
+// design: - will have to cycle trought zones with press of a button
+//        - will have to interrupt current schedule
+int ManualSwitch=3;
 
 // Telnet server
 //Server server(23);
@@ -636,6 +642,7 @@ void setup() {
   pinMode(dataPin, OUTPUT);  
   pinMode(clockPin, OUTPUT);
   pinMode(relayEnable, OUTPUT);
+  pinMode(ManualSwitch, INPUT);
   digitalWrite(relayEnable,LOW);//the state of the shift register is unknown. Lets power off all relays until we initialize
   //turn off all relays
   delay(1000); //lets wait a sec to avoid interference with all relays turning off
