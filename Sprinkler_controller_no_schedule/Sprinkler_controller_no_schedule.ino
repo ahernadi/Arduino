@@ -67,7 +67,7 @@ for (int i=0;i<8;i++)
    Serial.print("Will water for ");Serial.print(schedule[i][1]);Serial.print(" minutes "); Serial.print((long)1000*60* schedule[i][1]);Serial.println(" millisec ");
   delay((long)1000*60* schedule[i][1]);
  }
- delay((long)1000*60* 4170);//wait 21.5 hours
+ delay((long)1000*60* 4170);//wait 21.5 hours (24*3-2.5)
 }
 
 void updateShiftRegister()
