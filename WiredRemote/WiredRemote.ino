@@ -8,8 +8,8 @@ int prevButton=0;
 
 // remote control commands for Pioneer
 //values are in ohms
-const int VOL_UP=16000;
-const int VOL_DN=24000;
+const int VOL_UP=24000;
+const int VOL_DN=27500;
 const int PREV_TR=11250;
 const int NEXT_TR=8000;
 const int MODE=1200;
@@ -65,8 +65,8 @@ void loop() {
       // send command to car stereo, below values are for PIONEER head units
       //SPI.transfer(0); //address byte. for 4131 the wiper's address is 0 
       switch(currButton) {//this determines the value sent to the above address round(expected resistance/(max resistance/wiper steps),0))
-       case VOL_UP: digitalPotWrite(20); break;  // round(16000/(100000/127),0)
-       case VOL_DN: digitalPotWrite(30); break;  // round(24000/(100000/127),0)    
+       case VOL_UP: digitalPotWrite(30); break;  // round(16000/(100000/127),0)
+       case VOL_DN: digitalPotWrite(35); break;  // round(24000/(100000/127),0)    
        case PREV_TR: digitalPotWrite(14); break;  // round(11250/(100000/127),0)    
        case NEXT_TR: digitalPotWrite(10); break;  // round(8000/(100000/127),0)    
        case MODE: digitalPotWrite(2); break;  // round(1200/(100000/127),0)    
