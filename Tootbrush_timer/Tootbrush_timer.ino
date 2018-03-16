@@ -115,7 +115,7 @@ int ymax=0;
 bool isBlink;
 int i=0;
 isBlink=false;
-for (i=0;i<4;i++)
+for (i=0;i<8;i++)
 {tft.setRotation(3);
   tft.setCursor(50, 0);
   tft.setTextColor(WHITE);  tft.setTextSize(5);
@@ -142,13 +142,13 @@ tone(speaker, 1047, 1000/4);
   tft.println(i+1);
   tft.setRotation(4);
 }
-for (i=0;i<9;i++)
+for (i=0;i<4;i++)
 {tft.setRotation(3);
   tft.setCursor(50, 0);
   tft.setTextColor(YELLOW);  tft.setTextSize(5);
   tft.println(i+1);
   tft.setRotation(4);
-progress(240, 10, (isBlink?BLACK:WHITE));
+progress(240, 20, (isBlink?BLACK:WHITE));
 isBlink?openeye():closerighteye();
 isBlink=!isBlink;
 //progress(240, 45,BLACK);
