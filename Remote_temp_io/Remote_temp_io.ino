@@ -38,7 +38,7 @@ Adafruit_BMP280 bme; // I2C
 int count = 0;
 
 // set up the 'counter' feed
-AdafruitIO_Feed *counter = io.feed("temperatures.temp-sensor-1");
+AdafruitIO_Feed *counter = io.feed("temperatures.temp-sensor-2");
 
 void setup() {
 
@@ -81,7 +81,7 @@ void loop() {
   // save count to the 'counter' feed on Adafruit IO
   Serial.print("sending -> ");
   Serial.println(count);
-  counter->save(bme.readTemperature());
+  counter->save(bme.readTemperature()* 9/5 + 32);
 
   // increment the count by 1
   //count++;
