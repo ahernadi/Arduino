@@ -1,3 +1,5 @@
+//#include <FS.h>                   //this needs to be first, or it all crashes and burns...
+
 // Adafruit IO Publish Example
 //
 // Adafruit invests time and resources providing this open source code.
@@ -20,7 +22,8 @@
 #include <SPI.h>
 #include <Adafruit_Sensor.h>
 #include <Adafruit_BMP280.h>
-
+#include <ESP8266WebServer.h>
+#include <ESP8266mDNS.h>;
 #define BMP_SCK 13
 #define BMP_MISO 12
 #define BMP_MOSI 11 
@@ -35,10 +38,153 @@ Adafruit_BMP280 bme; // I2C
 /************************ Example Starts Here *******************************/
 
 // this int will hold the current count for our sketch
-int count = 0;
-
+int api_frequency = 1; //minutes
+unsigned long previousMillis = 0; 
 // set up the 'counter' feed
-AdafruitIO_Feed *counter = io.feed("temperatures.temp-sensor-2");
+AdafruitIO_Feed *counter;// = io.feed("temperatures.temp-sensor-2");
+
+//#include <FS.h>    
+//#include <ArduinoJson.h>
+//char api_user[40]="ahernadi";
+//char api_key[40] = "87532256773b4364978df4e62709134d";
+//char feed_name[40] = "temperatures.temp-sensor-2";
+char feedname[255]="";
+ESP8266WebServer server(80);
+
+void handleRoot() {
+
+  String page = FPSTR(HTTP_HEAD);
+  page.replace("{v}", "Options");
+  page += FPSTR(HTTP_SCRIPT);
+  page += FPSTR(HTTP_STYLE);
+  page += _customHeadElement;
+  page += FPSTR(HTTP_HEAD_END);
+  page += String(F("<h2>"));
+  page += "HWH temperature monitoring";
+  page += String(F("</h2>"));
+  page += String(F("<h3>Current temperature: "));
+  page += bme.readTemperature()* 9/5 + 32;
+  page += String(F("<P>Feed name is:"));
+  page += io.feed_name;
+  page += String(F("</P>"));
+  page += FPSTR(HTTP_PORTAL_OPTIONS);
+  page += FPSTR(HTTP_END);
+
+  server.sendHeader("Content-Length", String(page.length()));
+  server.send(200, "text/html", page);
+
+}
+
+
+void handleNotFound() {
+//  digitalWrite(led, 1);
+  String message = "File Not Found\n\n";
+  message += "URI: ";
+  message += server.uri();
+  message += "\nMethod: ";
+  message += (server.method() == HTTP_GET) ? "GET" : "POST";
+  message += "\nArguments: ";
+  message += server.args();
+  message += "\n";
+  for (uint8_t i = 0; i < server.args(); i++) {
+    message += " " + server.argName(i) + ": " + server.arg(i) + "\n";
+  }
+  server.send(404, "text/plain", message);
+//  digitalWrite(led, 0);
+}
+void handleSetFeed() {
+  String page = FPSTR(HTTP_HEAD);
+  page.replace("{v}", "Info");
+  page += FPSTR(HTTP_SCRIPT);
+  page += FPSTR(HTTP_STYLE);
+  page += _customHeadElement;
+  page += FPSTR(HTTP_HEAD_END);
+  page += F("Set the feed here");
+  page += FPSTR(HTTP_END);
+
+  server.sendHeader("Content-Length", String(page.length()));
+  server.send(200, "text/html", page);
+
+  //DEBUG_WM(F("Sent reset page"));
+  delay(5000);
+  //ESP.reset();
+  delay(2000);
+}void handleReset() {
+  String page = FPSTR(HTTP_HEAD);
+  page.replace("{v}", "Info");
+  page += FPSTR(HTTP_SCRIPT);
+  page += FPSTR(HTTP_STYLE);
+  page += _customHeadElement;
+  page += FPSTR(HTTP_HEAD_END);
+  page += F("Module will reset in a few seconds.");
+  page += FPSTR(HTTP_END);
+
+  server.sendHeader("Content-Length", String(page.length()));
+  server.send(200, "text/html", page);
+
+  //DEBUG_WM(F("Sent reset page"));
+  delay(5000);
+  ESP.reset();
+  delay(2000);
+}
+
+void handleClear() {
+  String page = FPSTR(HTTP_HEAD);
+  page.replace("{v}", "Info");
+  page += FPSTR(HTTP_SCRIPT);
+  page += FPSTR(HTTP_STYLE);
+  page += _customHeadElement;
+  page += FPSTR(HTTP_HEAD_END);
+  page += F("Module will reset in a few seconds.");
+  page += FPSTR(HTTP_END);
+
+  server.sendHeader("Content-Length", String(page.length()));
+  server.send(200, "text/html", page);
+
+  //DEBUG_WM(F("Saved Wifi network settings have been removed. THe module will reset and you will beed to go trough the setup again."));
+  delay(5000);
+  //Wifi.disconnect();
+  delay(2000);
+}
+void handleInfo() {
+  //DEBUG_WM(F("Info"));
+
+  String page = FPSTR(HTTP_HEAD);
+  page.replace("{v}", "Info");
+  page += FPSTR(HTTP_SCRIPT);
+  page += FPSTR(HTTP_STYLE);
+  page += _customHeadElement;
+  page += FPSTR(HTTP_HEAD_END);
+  page += F("<dl>");
+  page += F("<dt>Chip ID</dt><dd>");
+  page += ESP.getChipId();
+  page += F("</dd>");
+  page += F("<dt>Flash Chip ID</dt><dd>");
+  page += ESP.getFlashChipId();
+  page += F("</dd>");
+  page += F("<dt>IDE Flash Size</dt><dd>");
+  page += ESP.getFlashChipSize();
+  page += F(" bytes</dd>");
+  page += F("<dt>Real Flash Size</dt><dd>");
+  page += ESP.getFlashChipRealSize();
+  page += F(" bytes</dd>");
+  page += F("<dt>Soft AP IP</dt><dd>");
+  page += WiFi.softAPIP().toString();
+  page += F("</dd>");
+  page += F("<dt>Soft AP MAC</dt><dd>");
+  page += WiFi.softAPmacAddress();
+  page += F("</dd>");
+  page += F("<dt>Station MAC</dt><dd>");
+  page += WiFi.macAddress();
+  page += F("</dd>");
+  page += F("</dl>");
+  page += FPSTR(HTTP_END);
+
+  server.sendHeader("Content-Length", String(page.length()));
+  server.send(200, "text/html", page);
+
+ /// DEBUG_WM(F("Sent info page"));
+}
 
 void setup() {
 
@@ -49,12 +195,50 @@ void setup() {
  //   Wire.begin(2, 0);
   // wait for serial monitor to open
   while(! Serial);
+  /*
+//FS config.jason read
+Serial.println("mounting FS...");
+
+  if (SPIFFS.begin()) {
+    Serial.println("mounted file system");
+    if (SPIFFS.exists("/config.json")) {
+      //file exists, reading and loading
+      Serial.println("reading config file");
+      File configFile = SPIFFS.open("/config.json", "r");
+      if (configFile) {
+        Serial.println("opened config file");
+        size_t size = configFile.size();
+        // Allocate a buffer to store contents of the file.
+        std::unique_ptr<char[]> buf(new char[size]);
+
+        configFile.readBytes(buf.get(), size);
+        DynamicJsonBuffer jsonBuffer;
+        JsonObject& json = jsonBuffer.parseObject(buf.get());
+        json.printTo(Serial);
+        if (json.success()) {
+          Serial.println("\nparsed json");
+
+     //     strcpy(mqtt_server, json["mqtt_server"]);
+     //     strcpy(mqtt_port, json["mqtt_port"]);
+     //     strcpy(blynk_token, json["blynk_token"]);
+
+        } else {
+          Serial.println("failed to load json config");
+        }
+        configFile.close();
+      }
+    }
+  } else {
+    Serial.println("failed to mount FS");
+  }
+//end FS config.jason read
+*/
  if (!bme.begin(0x76)) {  
     Serial.println("Could not find a valid BMP280 sensor, check wiring!");
     while (1);
   }
   Serial.print("Connecting to Adafruit IO");
-
+//counter=io.feed("temperatures.temp-sensor-2");
   // connect to io.adafruit.com
   io.connect();
 
@@ -67,28 +251,57 @@ void setup() {
   // we are connected
   Serial.println();
   Serial.println(io.statusText());
+  //sprintf(feedname,"%s.%s","Temperatures",io.feed_name);
+  //Serial.println(feedname);
+  //feedname="temperatures."+io.feed_name;
+counter=io.feed(io.feed_name);
+//counter=io.feed("temperatures.temp-sensor-2");
+//starting web server to service:
+// feed anme change
+// reset
+// status
+  server.on("/", handleRoot);
+  server.on("/Clear",handleClear);
+  server.on("/SetFeed", handleSetFeed);  
+  server.on("/r",handleReset);
+  server.on("/i", handleInfo);
+  server.on("/inline", []() {
+    server.send(200, "text/plain", "this works as well");
+  });
 
+  server.onNotFound(handleNotFound);
+server.begin();
+  if (!MDNS.begin("hwhtempmonsetup.local")) {             // Start the mDNS responder for esp8266.local
+    Serial.println("Error setting up MDNS responder!");
+  }
+  Serial.println("mDNS responder started");
 }
 
 void loop() {
-
+  server.handleClient();
   // io.run(); is required for all sketches.
   // it should always be present at the top of your loop
   // function. it keeps the client connected to
   // io.adafruit.com, and processes any incoming data.
   io.run();
 
+
+
+    unsigned long currentMillis = millis();//4294967295
+
+  //if ((currentMillis<previousMillis?currentMillis - previousMillis:4294967295-previousMillis+currentMillis) >= (long)api_frequency*1000*60) {
+  if (currentMillis - previousMillis >= (long)api_frequency*1000*60 || currentMillis<previousMillis) {
+   // (currentMillis<previousMillis) ? Serial.println ("Overflow True:" + (4294967295 - previousMillis + currentMillis)) : Serial.println("Have not over false:" +(currentMillis - previousMillis));
+ //Serial.println("time -> "+currentMillis);
+ //Serial.println("time -> "+previousMillis);
+// Serial.println("time -> "+(currentMillis<previousMillis) ? (currentMillis - previousMillis) : (4294967295 - previousMillis + currentMillis) );
+ //Serial.println("time -> "+(currentMillis<previousMillis ? currentMillis - previousMillis : 4294967295 - previousMillis + currentMillis) );
+ 
+    previousMillis = currentMillis;
+
+   counter->save(bme.readTemperature()* 9/5 + 32); //in Farenheit
   // save count to the 'counter' feed on Adafruit IO
-  Serial.print("sending -> ");
-  Serial.println(count);
-  counter->save(bme.readTemperature()* 9/5 + 32);
-
-  // increment the count by 1
-  //count++;
-
-  // Adafruit IO is rate limited for publishing, so a delay is required in
-  // between feed->save events. In this example, we will wait three seconds
-  // (1000 milliseconds == 1 second) during each loop.
-  delay(5000);
+  Serial.println("sending -> ");
+    }
 
 }
