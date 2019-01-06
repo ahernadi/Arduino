@@ -1,5 +1,9 @@
-//#include <FS.h>                   //this needs to be first, or it all crashes and burns...
+#include <FS.h> 
+#include <ArduinoJson.h>
+//define your default values here, if there are different values in config.json, they are overwritten.
 
+
+#include <ESP8266mDNS.h> 
 // Adafruit IO Publish Example
 //
 // Adafruit invests time and resources providing this open source code.
@@ -23,7 +27,11 @@
 #include <Adafruit_Sensor.h>
 #include <Adafruit_BMP280.h>
 #include <ESP8266WebServer.h>
-#include <ESP8266mDNS.h>;
+#include <ESP8266mDNS.h>
+#include <ESP8266WiFi.h>
+#include <WiFiManager.h>
+  bool shouldSaveConfig = false;
+  
 #define BMP_SCK 13
 #define BMP_MISO 12
 #define BMP_MOSI 11 
@@ -45,12 +53,13 @@ AdafruitIO_Feed *counter;// = io.feed("temperatures.temp-sensor-2");
 
 //#include <FS.h>    
 //#include <ArduinoJson.h>
-//char api_user[40]="ahernadi";
-//char api_key[40] = "87532256773b4364978df4e62709134d";
-//char feed_name[40] = "temperatures.temp-sensor-2";
-char feedname[255]="";
+char api_user[40]="ahernadi";
+char api_key[40] = "87532256773b4364978df4e62709134d";
+char feed_name[40] = "temperatures.temp-sensor-2";
+//char feedname[255]="";
 ESP8266WebServer server(80);
 
+  WiFiManager wifiManager;
 void handleRoot() {
 
   String page = FPSTR(HTTP_HEAD);
@@ -64,10 +73,10 @@ void handleRoot() {
   page += String(F("</h2>"));
   page += String(F("<h3>Current temperature: "));
   page += bme.readTemperature()* 9/5 + 32;
-  page += String(F("<P>Feed name is:"));
-  page += io.feed_name;
+  page += String(F("F </h3><P>Feed name is:"));
+  page += feed_name;
   page += String(F("</P>"));
-  page += FPSTR(HTTP_PORTAL_OPTIONS);
+  page += FPSTR(HTTP_TEMP_PORTAL_OPTIONS);
   page += FPSTR(HTTP_END);
 
   server.sendHeader("Content-Length", String(page.length()));
@@ -125,6 +134,8 @@ void handleSetFeed() {
   //DEBUG_WM(F("Sent reset page"));
   delay(5000);
   ESP.reset();
+  //Wifi.disconnect();
+  //wifiManager.resetSettings();
   delay(2000);
 }
 
@@ -143,8 +154,10 @@ void handleClear() {
 
   //DEBUG_WM(F("Saved Wifi network settings have been removed. THe module will reset and you will beed to go trough the setup again."));
   delay(5000);
-  //Wifi.disconnect();
+  WiFi.disconnect();
+  Serial.println("Resetting the module");
   delay(2000);
+  ESP.reset();
 }
 void handleInfo() {
   //DEBUG_WM(F("Info"));
@@ -185,19 +198,25 @@ void handleInfo() {
 
  /// DEBUG_WM(F("Sent info page"));
 }
-
+void saveConfigCallback () {
+  Serial.println("Should save config");
+  shouldSaveConfig = true;
+}
 void setup() {
 
   // start the serial connection
   Serial.begin(115200);
+  delay(500);
     //for ESP8266-01
  //   Wire.pins(2, 0);
  //   Wire.begin(2, 0);
   // wait for serial monitor to open
-  while(! Serial);
-  /*
-//FS config.jason read
-Serial.println("mounting FS...");
+  //while(! Serial);
+  //clean FS, for testing
+  //SPIFFS.format();
+
+  //read configuration from FS json
+  Serial.println("mounting FS...");
 
   if (SPIFFS.begin()) {
     Serial.println("mounted file system");
@@ -218,21 +237,37 @@ Serial.println("mounting FS...");
         if (json.success()) {
           Serial.println("\nparsed json");
 
-     //     strcpy(mqtt_server, json["mqtt_server"]);
-     //     strcpy(mqtt_port, json["mqtt_port"]);
-     //     strcpy(blynk_token, json["blynk_token"]);
+          strcpy(api_user, json["api_user"]);
+          strcpy(api_key, json["api_key"]);
+          strcpy(feed_name, json["feed_name"]);
 
         } else {
-          Serial.println("failed to load json config");
+          Serial.println("failed to parse json");
         }
         configFile.close();
       }
+      else 
+      {
+          Serial.println("failed to load json config");
+        }
     }
+    else {
+        Serial.println("/Config.json does not exist");      
+      }
   } else {
     Serial.println("failed to mount FS");
   }
-//end FS config.jason read
-*/
+  //end read
+  WiFiManagerParameter custom_api_user("apiuser", "API username", api_user, 40);
+  WiFiManagerParameter custom_api_key("apikey", "API key", api_key, 40);
+  WiFiManagerParameter custom_feed_name("feedname", "Feed name", feed_name, 40);
+  wifiManager.addParameter(&custom_api_user);
+  wifiManager.addParameter(&custom_api_key);
+  wifiManager.addParameter(&custom_feed_name);
+
+  wifiManager.setSaveConfigCallback(saveConfigCallback);
+
+ 
  if (!bme.begin(0x76)) {  
     Serial.println("Could not find a valid BMP280 sensor, check wiring!");
     while (1);
@@ -240,7 +275,34 @@ Serial.println("mounting FS...");
   Serial.print("Connecting to Adafruit IO");
 //counter=io.feed("temperatures.temp-sensor-2");
   // connect to io.adafruit.com
+
+  //wifiManager.resetSettings();// uncomment to forget previous wifi manager settings
+  wifiManager.autoConnect("Hwh_temp_mon","");
+  Serial.println("yay connected");
+    strcpy(api_user, custom_api_user.getValue());
+  strcpy(api_key, custom_api_key.getValue());
+  strcpy(feed_name, custom_feed_name.getValue());
+  counter=io.feed(feed_name);
   io.connect();
+  //save the custom parameters to FS
+  if (shouldSaveConfig) {
+    Serial.println("saving config");
+    DynamicJsonBuffer jsonBuffer;
+    JsonObject& json = jsonBuffer.createObject();
+    json["api_user"] = api_user;
+    json["api_key"] = api_key;
+    json["feed_name"] = feed_name;
+
+    File configFile = SPIFFS.open("/config.json", "w");
+    if (!configFile) {
+      Serial.println("failed to open config file for writing");
+    }
+
+    json.printTo(Serial);
+    json.printTo(configFile);
+    configFile.close();
+    //end save
+  }
 
   // wait for a connection
   while(io.status() < AIO_CONNECTED) {
@@ -254,7 +316,7 @@ Serial.println("mounting FS...");
   //sprintf(feedname,"%s.%s","Temperatures",io.feed_name);
   //Serial.println(feedname);
   //feedname="temperatures."+io.feed_name;
-counter=io.feed(io.feed_name);
+
 //counter=io.feed("temperatures.temp-sensor-2");
 //starting web server to service:
 // feed anme change
@@ -271,7 +333,7 @@ counter=io.feed(io.feed_name);
 
   server.onNotFound(handleNotFound);
 server.begin();
-  if (!MDNS.begin("hwhtempmonsetup.local")) {             // Start the mDNS responder for esp8266.local
+  if (!MDNS.begin("hwhtempmonsetup")) {             // Start the mDNS responder for esp8266.local
     Serial.println("Error setting up MDNS responder!");
   }
   Serial.println("mDNS responder started");
@@ -284,7 +346,7 @@ void loop() {
   // function. it keeps the client connected to
   // io.adafruit.com, and processes any incoming data.
   io.run();
-
+  MDNS.update();
 
 
     unsigned long currentMillis = millis();//4294967295
@@ -302,6 +364,7 @@ void loop() {
    counter->save(bme.readTemperature()* 9/5 + 32); //in Farenheit
   // save count to the 'counter' feed on Adafruit IO
   Serial.println("sending -> ");
+  Serial.print(currentMillis);
     }
 
 }
