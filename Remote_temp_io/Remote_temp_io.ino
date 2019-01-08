@@ -55,15 +55,45 @@ AdafruitIO_Feed *counter;// = io.feed("temperatures.temp-sensor-2");
 //#include <ArduinoJson.h>
 char api_user[40]="ahernadi";
 char api_key[40] = "87532256773b4364978df4e62709134d";
-char feed_name[40] = "temperatures.temp-sensor-2";
+char feed_name[40] = "temperatures.temp-sensor-3";
+char ip[2][8]={"000.000","000.000"};
+float ip12;// = atof(test);
+float ip34;// = atof(test);
 //char feedname[255]="";
 ESP8266WebServer server(80);
-
+//custom parameters for wifi manager
+  WiFiManagerParameter custom_api_user("apiuser", "API username", api_user, 40);
+  WiFiManagerParameter custom_api_key("apikey", "API key", api_key, 40);
+  WiFiManagerParameter custom_feed_name("feedname", "Feed name", feed_name, 40);
+//end custom parameters
   WiFiManager wifiManager;
+void saveCustomParam()
+{
+  Serial.println("saving config");
+    DynamicJsonBuffer jsonBuffer;
+    JsonObject& json = jsonBuffer.createObject();
+    json["api_user"] = api_user;
+    json["api_key"] = api_key;
+    json["feed_name"] = feed_name;
+
+    File configFile = SPIFFS.open("/config.json", "w");
+    if (!configFile) {
+      Serial.println("failed to open config file for writing");
+    }
+    yield();
+    json.printTo(Serial);
+    json.printTo(configFile);
+    configFile.close();
+    //end save
+    //lets reset the module to pick up the new settings
+    Serial.println("Saved config");
+    //ESP.reset(); 
+  }
+
 void handleRoot() {
 
   String page = FPSTR(HTTP_HEAD);
-  page.replace("{v}", "Options");
+  page.replace("{v}", "HWH tempmon settings");//page title
   page += FPSTR(HTTP_SCRIPT);
   page += FPSTR(HTTP_STYLE);
   page += _customHeadElement;
@@ -103,14 +133,44 @@ void handleNotFound() {
 }
 void handleSetFeed() {
   String page = FPSTR(HTTP_HEAD);
-  page.replace("{v}", "Info");
+  page.replace("{v}", "HWH tempmon set feed");
   page += FPSTR(HTTP_SCRIPT);
   page += FPSTR(HTTP_STYLE);
   page += _customHeadElement;
   page += FPSTR(HTTP_HEAD_END);
-  page += F("Set the feed here");
+  //page += F("Set the feed here");
+  //page += FPSTR(HTTP_END);
+  
+  page += FPSTR(HTTP_FORM_START_CUSTOM);
+  char parLength[5];
+  // add the extra parameters to the form
+  for (int i = 0; i < wifiManager.getParameterCount(); i++) {
+    if (wifiManager._params[i] == NULL) {
+      break;
+    }
+
+    String pitem = FPSTR(HTTP_FORM_PARAM);
+    if (wifiManager._params[i]->getID() != NULL) {
+      pitem.replace("{i}", wifiManager._params[i]->getID());
+      pitem.replace("{n}", wifiManager._params[i]->getID());
+      pitem.replace("{p}", wifiManager._params[i]->getPlaceholder());
+      snprintf(parLength, 5, "%d", wifiManager._params[i]->getValueLength());
+      pitem.replace("{l}", parLength);
+      pitem.replace("{v}", wifiManager._params[i]->getValue());
+      pitem.replace("{c}", wifiManager._params[i]->getCustomHTML());
+    } else {
+      pitem = wifiManager._params[i]->getCustomHTML();
+    }
+
+    page += pitem;
+  }
+  if (wifiManager._params[0] != NULL) {
+    page += "<br/>";
+  }
+  page += FPSTR(HTTP_FORM_END);
   page += FPSTR(HTTP_END);
 
+  
   server.sendHeader("Content-Length", String(page.length()));
   server.send(200, "text/html", page);
 
@@ -118,9 +178,54 @@ void handleSetFeed() {
   delay(5000);
   //ESP.reset();
   delay(2000);
-}void handleReset() {
+}
+void handleFeedSave() {
+//  DEBUG_WM(F("Feed save"));
+
+  //parameters
+  for (int i = 0; i < wifiManager.getParameterCount(); i++) {
+    if (wifiManager._params[i] == NULL) {
+      break;
+    }
+    //read parameter
+    String value = server.arg(wifiManager._params[i]->getID()).c_str();
+    //store it in array
+    value.toCharArray(wifiManager._params[i]->_value, wifiManager._params[i]->getValueLength() + 1);
+//    DEBUG_WM(F("Parameter"));
+//    DEBUG_WM(_params[i]->getID());
+//    DEBUG_WM(value);
+  Serial.println("Parameter");
+  Serial.println(wifiManager._params[i]->getID());
+  Serial.println(value);  
+  Serial.println(wifiManager._params[i]->_value);
+  }
+
+
   String page = FPSTR(HTTP_HEAD);
-  page.replace("{v}", "Info");
+  page.replace("{v}", "Credentials Saved");
+  page += FPSTR(HTTP_SCRIPT);
+  page += FPSTR(HTTP_STYLE);
+  page += _customHeadElement;
+  page += FPSTR(HTTP_HEAD_END);
+  page += FPSTR(HTTP_SAVED);
+  page += FPSTR(HTTP_END);
+
+  server.sendHeader("Content-Length", String(page.length()));
+  server.send(200, "text/html", page);
+  delay(1000);
+  strcpy(api_user, custom_api_user.getValue());
+  strcpy(api_key, custom_api_key.getValue());
+  strcpy(feed_name, custom_feed_name.getValue());
+  Serial.print("Feed we are about to save");
+  Serial.println(custom_feed_name.getValue());
+  saveCustomParam();
+//  DEBUG_WM(F("Sent Feed save page"));
+
+  //connect = true; //signal ready to connect/reset
+}
+void handleReset() {
+  String page = FPSTR(HTTP_HEAD);
+  page.replace("{v}", "HWH tempmon restart");
   page += FPSTR(HTTP_SCRIPT);
   page += FPSTR(HTTP_STYLE);
   page += _customHeadElement;
@@ -141,7 +246,7 @@ void handleSetFeed() {
 
 void handleClear() {
   String page = FPSTR(HTTP_HEAD);
-  page.replace("{v}", "Info");
+  page.replace("{v}", "HWH tempmon Reset");
   page += FPSTR(HTTP_SCRIPT);
   page += FPSTR(HTTP_STYLE);
   page += _customHeadElement;
@@ -202,8 +307,9 @@ void saveConfigCallback () {
   Serial.println("Should save config");
   shouldSaveConfig = true;
 }
-void setup() {
 
+void setup() {
+ // bool haveconfig=false;
   // start the serial connection
   Serial.begin(115200);
   delay(500);
@@ -245,6 +351,7 @@ void setup() {
           Serial.println("failed to parse json");
         }
         configFile.close();
+        //haveconfig=true;
       }
       else 
       {
@@ -258,9 +365,7 @@ void setup() {
     Serial.println("failed to mount FS");
   }
   //end read
-  WiFiManagerParameter custom_api_user("apiuser", "API username", api_user, 40);
-  WiFiManagerParameter custom_api_key("apikey", "API key", api_key, 40);
-  WiFiManagerParameter custom_feed_name("feedname", "Feed name", feed_name, 40);
+
   wifiManager.addParameter(&custom_api_user);
   wifiManager.addParameter(&custom_api_key);
   wifiManager.addParameter(&custom_feed_name);
@@ -279,29 +384,18 @@ void setup() {
   //wifiManager.resetSettings();// uncomment to forget previous wifi manager settings
   wifiManager.autoConnect("Hwh_temp_mon","");
   Serial.println("yay connected");
-    strcpy(api_user, custom_api_user.getValue());
-  strcpy(api_key, custom_api_key.getValue());
-  strcpy(feed_name, custom_feed_name.getValue());
+  //get custom parameter values
+  //we really only need this if we did not have a config file
+  
+
   counter=io.feed(feed_name);
   io.connect();
   //save the custom parameters to FS
   if (shouldSaveConfig) {
-    Serial.println("saving config");
-    DynamicJsonBuffer jsonBuffer;
-    JsonObject& json = jsonBuffer.createObject();
-    json["api_user"] = api_user;
-    json["api_key"] = api_key;
-    json["feed_name"] = feed_name;
-
-    File configFile = SPIFFS.open("/config.json", "w");
-    if (!configFile) {
-      Serial.println("failed to open config file for writing");
-    }
-
-    json.printTo(Serial);
-    json.printTo(configFile);
-    configFile.close();
-    //end save
+      strcpy(api_user, custom_api_user.getValue());
+  strcpy(api_key, custom_api_key.getValue());
+  strcpy(feed_name, custom_feed_name.getValue());
+   saveCustomParam();
   }
 
   // wait for a connection
@@ -330,14 +424,37 @@ void setup() {
   server.on("/inline", []() {
     server.send(200, "text/plain", "this works as well");
   });
+  server.on("/feedsave", handleFeedSave);  
 
   server.onNotFound(handleNotFound);
 server.begin();
-  if (!MDNS.begin("hwhtempmonsetup")) {             // Start the mDNS responder for esp8266.local
+  if (!MDNS.begin("hwhtempmonsetup")) {             // Start the mDNS responder for hwhtempmonsetup.local
     Serial.println("Error setting up MDNS responder!");
   }
   Serial.println("mDNS responder started");
+  MDNS.addService("http","tcp",80);
+//get IP address to send as location so we can find this later.
+char cstringToParse[100];
+  strcpy(cstringToParse, WiFi.localIP().toString().c_str()); // to simulate receiving from wherever
+int i=0;
+  char * item =  strtok(cstringToParse, ".");
+  while (item != NULL) {
+    sprintf(ip[i],"%03s.%03s",item,strtok(NULL, "."));
+    Serial.println(item);
+    item = strtok(NULL, ".");
+    i++;
+  }
+ip12 = atof(ip[0]);
+ip34 = atof(ip[1]);
+
+Serial.print("ip1");Serial.println(ip[0]);
+Serial.println(ip12);
+Serial.print("ip");Serial.println(ip[1]);
+Serial.println(ip34);
+//counter->setLocation(double lat, double lon, double ele=0); 
+//counter->setLocation() 
 }
+
 
 void loop() {
   server.handleClient();
@@ -350,18 +467,9 @@ void loop() {
 
 
     unsigned long currentMillis = millis();//4294967295
-
-  //if ((currentMillis<previousMillis?currentMillis - previousMillis:4294967295-previousMillis+currentMillis) >= (long)api_frequency*1000*60) {
   if (currentMillis - previousMillis >= (long)api_frequency*1000*60 || currentMillis<previousMillis) {
-   // (currentMillis<previousMillis) ? Serial.println ("Overflow True:" + (4294967295 - previousMillis + currentMillis)) : Serial.println("Have not over false:" +(currentMillis - previousMillis));
- //Serial.println("time -> "+currentMillis);
- //Serial.println("time -> "+previousMillis);
-// Serial.println("time -> "+(currentMillis<previousMillis) ? (currentMillis - previousMillis) : (4294967295 - previousMillis + currentMillis) );
- //Serial.println("time -> "+(currentMillis<previousMillis ? currentMillis - previousMillis : 4294967295 - previousMillis + currentMillis) );
- 
     previousMillis = currentMillis;
-
-   counter->save(bme.readTemperature()* 9/5 + 32); //in Farenheit
+   counter->save(bme.readTemperature()* 9/5 + 32,ip12,ip34,0); //in Farenheit
   // save count to the 'counter' feed on Adafruit IO
   Serial.println("sending -> ");
   Serial.print(currentMillis);

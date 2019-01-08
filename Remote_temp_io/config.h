@@ -52,7 +52,9 @@ const char HTTP_STYLE[] PROGMEM           = "<style>.c{text-align: center;} div,
 const char HTTP_SCRIPT[] PROGMEM          = "<script>function c(l){document.getElementById('s').value=l.innerText||l.textContent;document.getElementById('p').focus();}</script>";
 const char HTTP_HEAD_END[] PROGMEM        = "</head><body><div style='text-align:left;display:inline-block;min-width:260px;'>";
 */
-const char HTTP_TEMP_PORTAL_OPTIONS[] PROGMEM  = "<form action=\"/SetFeed\" method=\"get\"><button>Set Feed name</button></form><br/><form action=\"/Clear\" method=\"get\"><button>Clear wifi settings</button></form><br/><form action=\"/i\" method=\"get\"><button>Info</button></form><br/><form action=\"/r\" method=\"post\"><button>Reset</button></form>";
+const char HTTP_TEMP_PORTAL_OPTIONS[] PROGMEM  = "<form action=\"/SetFeed\" method=\"get\"><button>Set Feed name</button></form><br/><form action=\"/Clear\" method=\"get\"><button>Clear wifi settings</button></form><br/><form action=\"/i\" method=\"get\"><button>Info</button></form><br/><form action=\"/r\" method=\"post\"><button>Restart</button></form>";
+const char HTTP_FORM_START_CUSTOM[] PROGMEM      = "<form method='get' action='feedsave'>";
+
 //const char HTTP_END[] PROGMEM             = "</div></body></html>";
 const char*   _customHeadElement      = "";
 
