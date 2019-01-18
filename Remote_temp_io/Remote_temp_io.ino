@@ -44,22 +44,21 @@ Adafruit_BMP280 bme; // I2C
 //Adafruit_BMP280 bme(BMP_CS, BMP_MOSI, BMP_MISO,  BMP_SCK);
   
 /************************ Example Starts Here *******************************/
-
-// this int will hold the current count for our sketch
-int api_frequency = 1; //minutes
+int api_frequency = 60; //minutes
 unsigned long previousMillis = 0; 
+int beacon_frequency = 5; //seconds
+unsigned long BeakonPreviousMillis = 0; 
+
 // set up the 'counter' feed
 AdafruitIO_Feed *counter;// = io.feed("temperatures.temp-sensor-2");
 
-//#include <FS.h>    
-//#include <ArduinoJson.h>
 char api_user[40]="ahernadi";
-char api_key[40] = "87532256773b4364978df4e62709134d";
-char feed_name[40] = "temperatures.temp-sensor-3";
+char api_key[40] = "";
+char feed_name[40] = "temperatures.temp-sensor";
 char ip[2][8]={"000.000","000.000"};
-float ip12;// = atof(test);
-float ip34;// = atof(test);
-//char feedname[255]="";
+float ip12;
+float ip34;
+
 ESP8266WebServer server(80);
 //custom parameters for wifi manager
   WiFiManagerParameter custom_api_user("apiuser", "API username", api_user, 40);
@@ -407,15 +406,7 @@ void setup() {
   // we are connected
   Serial.println();
   Serial.println(io.statusText());
-  //sprintf(feedname,"%s.%s","Temperatures",io.feed_name);
-  //Serial.println(feedname);
-  //feedname="temperatures."+io.feed_name;
 
-//counter=io.feed("temperatures.temp-sensor-2");
-//starting web server to service:
-// feed anme change
-// reset
-// status
   server.on("/", handleRoot);
   server.on("/Clear",handleClear);
   server.on("/SetFeed", handleSetFeed);  
@@ -453,6 +444,10 @@ Serial.print("ip");Serial.println(ip[1]);
 Serial.println(ip34);
 //counter->setLocation(double lat, double lon, double ele=0); 
 //counter->setLocation() 
+//initian reading
+   counter->save(bme.readTemperature()* 9/5 + 32,ip12,ip34,0); //in Farenheit
+  // save count to the 'counter' feed on Adafruit IO
+  Serial.println("sending -> ");
 }
 
 
@@ -474,5 +469,13 @@ void loop() {
   Serial.println("sending -> ");
   Serial.print(currentMillis);
     }
+//int beacon_frequency = 5; //seconds
+//unsigned long BeakonPreviousMillis = 0; 
+ if (currentMillis - BeakonPreviousMillis >= (long)beacon_frequency*1000 || currentMillis<BeakonPreviousMillis) {
+    BeakonPreviousMillis = currentMillis;
+  // print a dot to signify we are alive
+  Serial.println(".");
+    }
+    
 
 }
