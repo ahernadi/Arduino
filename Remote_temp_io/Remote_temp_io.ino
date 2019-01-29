@@ -308,6 +308,7 @@ void saveConfigCallback () {
 }
 
 void setup() {
+  pinMode(0, INPUT_PULLUP) //lets use the flash button to clear settings
  // bool haveconfig=false;
   // start the serial connection
   Serial.begin(115200);
@@ -460,7 +461,11 @@ void loop() {
   io.run();
   MDNS.update();
 
-
+ if(digitalRead(0)=0){
+   Serial.println("Flash was pressed ");
+ //ESP.reset();
+   
+ }// flash was pressed, lets forget Wifi settings
     unsigned long currentMillis = millis();//4294967295
   if (currentMillis - previousMillis >= (long)api_frequency*1000*60 || currentMillis<previousMillis) {
     previousMillis = currentMillis;
