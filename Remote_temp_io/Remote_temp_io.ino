@@ -308,7 +308,7 @@ void saveConfigCallback () {
 }
 
 void setup() {
-  pinMode(0, INPUT_PULLUP) //lets use the flash button to clear settings
+  pinMode(0, INPUT_PULLUP); //lets use the flash button to clear settings
  // bool haveconfig=false;
   // start the serial connection
   Serial.begin(115200);
@@ -461,7 +461,7 @@ void loop() {
   io.run();
   MDNS.update();
 
- if(digitalRead(0)=0){
+ if(digitalRead(0)==0){
    Serial.println("Flash was pressed ");
  //ESP.reset();
    
