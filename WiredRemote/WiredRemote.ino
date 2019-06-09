@@ -5,6 +5,13 @@ int CS= 19;
 int wheelPin=A7; // steering wheel resistance reading pin. Strearing weheel goes between vcc and this pin
 int prevButton=0;
 
+const int numReadings = 10;
+
+int readings[numReadings];      // the readings from the analog input
+int readIndex = 0;              // the index of the current reading
+int total = 0;                  // the running total
+int average = 0;                // the average
+
 
 // remote control commands for Pioneer
 //values are in ohms
@@ -22,16 +29,31 @@ void setup() {
   delay(50);
   digitalPotWrite(0); 
   pinMode(wheelPin, INPUT);
-
+for (int thisReading = 0; thisReading < numReadings; thisReading++) {
+    readings[thisReading] = 0;
+  }
   delay(100);
   Serial.begin(9600); 
 }
 
 
 int getR() { // this function returns pressed button code or 0 if all buttons are released
+average=0;
+for (int thisReading = 0; thisReading < numReadings; thisReading++) {
+   delay(10);
+    readings[thisReading] = analogRead(wheelPin);
+//Serial.print("reading");Serial.println(readings[thisReading]);
+      
+  }
 
+for (int thisReading = 0; thisReading < numReadings; thisReading++) {
+    //readings[thisReading] = analogRead(wheelPin);
+    average=average+((float)readings[thisReading]/(float)numReadings);
+  }
+
+  
   // read resistance value from the steering wheel buttons
-  int r=analogRead(wheelPin);
+  int r=(int)average;
   //Serial.print("ADC value:");Serial.println(r);
   //Serial.print("Resistor value:");Serial.println(1000*(1/(5/(float(r)/1024)-1)));
   // below values are for Honda Civic steering wheel controls and 1 kOhms known resistor 
@@ -43,6 +65,7 @@ int getR() { // this function returns pressed button code or 0 if all buttons ar
   //mode 6200
   // we will get a voltage reading from the voltage divider
   // to be safe we use ranges around the values we expec to measure
+  Serial.print("average");Serial.println(r);
   if (r>=838) return(VOL_DN);//above 4.09 volt //930=100 ohm
   if (r>=651 && r<=837) return(VOL_UP);//between 4.08 and 3.18 volt //749=360 ohm
   if (r>=448 && r<=650) return(PREV_TR);//between 3.17 and 2.19// 528=888 ohm
@@ -56,7 +79,7 @@ void loop() {
   int currButton=getR(); // get current pressed button code
   if (currButton!=prevButton) { // if it has changed since last reading
     delay(10);
-    currButton=getR(); // wait 10ms and read again to make sure this is not just some noise
+   currButton=getR(); // wait 10ms and read again to make sure this is not just some noise
     if (currButton!=prevButton) { 
       Serial.print("Output nominal resistance:");Serial.println(currButton);
       prevButton=currButton; 
